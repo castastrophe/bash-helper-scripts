@@ -1,0 +1,55 @@
+#!/bin/bash
+
+[[ "$1" == "test" ]] && test=true || test=false
+log=~/log/translation_createfolder/$(date +"%Y-%m-%d").log
+echo "" >> $log
+echo "---" >> $log
+echo "DATE: $(date)" >> $log
+[[ $test = true ]] && echo "TEST MODE ONLY" >> $log
+
+hold_orig=$(pwd) && cd ~/Google\ Drive/Translations/Day-to-day\ edits/1-Ready\ for\ translation
+
+echo "PWD: $(pwd)" >> $log
+
+IFS_hold=$IFS
+IFS=$'\n'
+
+for i in $(find . -mindepth 2 -type f -name "*.html"); do
+	logvar "All found files" "$i" "$log"
+	
+	filename="${i/\.\/Priority [[:digit:]]*\//}"
+	logvar "Filename" "$filename" "$log"
+	folder=$(strip 5 "${filename}")
+	logvar "Folder name" "$folder" "$log"
+	
+	cd ../3-Completed\ translations/
+	
+	catch=false
+
+	for j in $(find * -maxdepth 0 -type d); do
+		if [[ "$j" != "_DONE" ]]; then
+			nocount="${j/*_\[*-*\]*/}"
+			[[ -n "$nocount" ]] && dir=$j || dir=$(strip 6 $j)
+				
+			if [ "$folder" == "$dir" ] && [ $catch = false ]; then
+				catch=true
+				echo "MATCHES: $folder ?= $dir" >> $log
+			fi
+		fi
+	done
+	IFS=$IFS_hold
+	
+	if [ $catch = false ]; then
+		folder=$(echo "$folder" | tr -d '[[:space:]]')
+		echo "NEW: $folder != $dir" >> $log
+		echo "mkdir ${folder}_[0-0]" >> $log
+		
+		[[ $test = false ]] && mkdir "${folder}_[0-0]"
+		
+		echo "Created new folder: ${folder}_[0-0]" >> $log
+	fi
+	
+done
+
+countfiles "$test"
+cd "$hold_orig"

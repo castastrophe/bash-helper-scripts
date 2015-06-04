@@ -1,0 +1,50 @@
+#!/bin/bash
+# Cleansing script
+
+clean(){
+    folder=$(pwd)
+    echo "Cleaning files in folder: $folder"
+    
+    for f in $(find * -type f -maxdepth 0 -name "*.html"); do
+        if [ "$f" != "_DONE" ] && [ -n "${f##*gdoc*}" ] && [ -n "${f##*Icon*}" ] && [ -z "${f##*html*}" ]; then
+            if grep -q "\[Nid\:" "$f"; then
+                echo "Correcting /[Nid:/: $f"
+                perl -pi -w -e 's/\[\[Nid\:([0-9]+)\]\]\./\[\[nid\:$1\]\]/g;' "$f"
+            fi
+            
+#            if $(echo "$folder" | grep -qi "german") && grep -q "\&nbsp\;" "$f"; then
+#                echo "Correcting /&nbsp;/: $f"
+#                perl -pi -w -e 's/\&nbsp\;/ /g;' "$f"            
+#            fi
+        fi
+    done
+}
+
+dup(){
+    echo "Removing duplicates in folder: $(pwd)"
+    ls -lrt | while read item; do
+        hold=$(echo "$item" | awk '{print $9}' | sed 's/\.html//g')
+        file=$(echo "$item" | awk '{print $9, $10}')
+        file=$(echo "$file" | xargs) #remove spaces
+        
+        #if the file isn't the same name as we would change it to and it's not the _DONE folder or a gdoc file or and empty string...
+        [ "$file" != "${hold}.html" ] && [ "$hold" != "_DONE" ] && [ "$file" != "" ] && [ -n "${file##*gdoc*}" ] && [ -n "${file##*Icon*}" ] && [ -z "${file##*html*}" ]  && mv "$file" "${hold}.html" && echo "Duplicate file found: move $file to ${hold}.html"
+    done
+}
+
+task="$@"
+
+if [ "$task" == "dup" ]; then
+    dup
+elif [ "$task" == "text" ]; then
+    clean
+elif [ -z "$task" ]; then
+    dup
+    clean
+else
+    echo "Incorrect inputs. Options are:"
+    echo "   clean"
+    echo "   clean all"
+    echo "   clean dup"
+    echo "   clean text"
+fi

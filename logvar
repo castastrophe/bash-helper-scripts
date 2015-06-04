@@ -1,0 +1,7 @@
+#!/bin/bash
+
+label=$1
+var=$2
+log=$3
+
+echo "$label: $var" >> $log

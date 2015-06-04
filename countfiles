@@ -1,0 +1,78 @@
+#!/bin/bash
+
+log=~/log/translation_countfiles/$(date +"%Y-%m-%d").log
+echo "" >> $log
+echo "---" >> $log
+echo "DATE: $(date)" >> $log
+
+[[ "$1" == true ]] && test=true || test=false
+[[ $test = true ]] && echo "TEST RUN" && echo "--TEST--" >> $log 
+
+hold=$(pwd) && cd ~/Google\ Drive/Translations/Day-to-day\ edits/3-Completed\ translations
+
+echo "PWD: $(pwd)" >> $log
+
+for i in *; do
+	let "count=0"
+	let "total=0"
+	let "len=0"
+	folder=""
+	
+	if [[ "$i" != "_DONE" ]]; then
+		
+		if [[ "$i" == *\[*\] ]]; then
+			logvar "fullfoldername" $i "$log"
+			
+			full_len=${#i}
+			count_len=${i/_\[*\]/}
+			len=$(( $full_len - ${#count_len} ))
+			
+			logvar "length of end brackets" $len "$log"
+			
+			num1_pos=$(echo $i | awk '{print match($0, /\[[0-9]+-/)}') #${i: -4:1}
+			split=$(echo $i | awk '{print match($0, /-[0-9]+\]/)}') #${i: -4:1}
+			len1=$(( ${split} - ${num1_pos} - 1 ))
+			
+			logvar "first number position" $num1_pos "$log"
+			logvar "split character" $split "$log"
+			logvar "length of number" $len1 "$log"
+			
+			num2_pos=$(( ${split} + 1 )) #${i: -4:1}
+			
+			logvar "second number position" $num2_pos "$log"
+
+			c=${i:${num1_pos}:${len1}}
+			logvar "# pending input" $c "$log"
+			
+			t=${i:${num2_pos}-1:4}
+			t=${t//]}
+			logvar "total amount in folder" "$t" "$log"
+			
+			#echo "i: $i | len: $len | c: $c | t: $t" >> $log
+			folder=${i:0: $((${len} * -1 ))}
+		else
+			folder=$i
+			let "c=-1"
+		fi
+		
+		for j in $(find $i -maxdepth 1 -type f); do
+			filename=${j:$((${full_len}+1))}
+			echo "FILENAME: $filename | J: $j | I: $i" >> $log
+			[[ "$filename" == *html ]] && [[ "$filename" != DONE* ]] && let "count++"
+			[[ "$filename" == *html ]] && let "total++"
+		done
+					
+		echo "FOLDER: $folder | C: $c | COUNT: $count | T: $t | TOTAL: $total" >> $log
+		
+		[[ "$t" -eq "8" ]] && [[ "c" -eq "0" ]] && echo "READY FOR _DONE FOLDER: $folder" >> ${log}_DONE
+		
+		if [[ "$c" -ne "$count" ]] || [[ "$t" -ne "$total" ]]; then
+			newfile=$(echo "${folder}_\[${count}-${total}\]" | tr -d '[[:space:]]')
+			[[ $test = false ]] && mv "$i" "${newfile}"
+			[[ $test = true ]] && echo "mv $i ${newfile}"
+			echo "mv $i ${newfile}" >> $log
+		fi
+	fi
+done
+
+cd "$hold"

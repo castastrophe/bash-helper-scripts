@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ $1 ]; then
+	compgen -ac | grep $1
+else
+	compgen -ac
+fi

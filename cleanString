@@ -1,0 +1,5 @@
+#!/bin/bash
+
+str="$@"
+str=$(lowcase $(echo "$str" | tr -d '[[:space:]]')) #strips all spaces and sets to lowercase
+return $str

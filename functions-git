@@ -1,0 +1,39 @@
+#!/bin/bash
+
+function checkout {
+    branch=$1
+    git checkout cce
+    git checkout $branch
+    git pull origin cce
+}
+
+function push {
+    msg="${*}"
+
+    proj="" 
+    IFS='-' read -a w <<< $(currbranch)
+    if [[ "${w[1]}" =~ (US|TASK|INC)[[:digit:]]+ ]]; then proj=${w[1]}; fi
+
+    if [ -z $msg ]; then 
+        read -p "Describe commit: [UX] $proj-" msg 
+    fi
+    
+    git commit -a -m "[UX] $proj-$msg" 
+    git push origin $(currbranch)
+}
+
+function newbranch {
+    stash=$(git status | grep -i "nothing to commit")
+    [ -z "$stash" ] && git stash
+
+    git checkout cce
+    git pull origin cce
+
+    if [ $1 ]; then
+        git checkout -b ux-$1
+        git push -u origin ux-$1
+    else
+        read -p "Branch name: " branch && git checkout -b ux-$branch 
+        git push -u origin ux-$branch
+    fi
+}

@@ -1,0 +1,126 @@
+#!/bin/bash
+# Set of CVS-related functions
+
+function cvs { 
+    xcrun cvs "$@" 
+}
+
+function cvscommit {
+    [[ $@ ]] && cvs -q commit -m$@ || cvs -q commit -m"" .
+}
+
+function cvsadd {
+    [[ $@ ]] && cvs add $@ || cvs add index.html
+}
+
+function copycourse(){
+    if [ $# -eq 0 ]; then
+        echo "Error: This function takes 3 inputs:"
+        echo "    1: original course number"
+        echo "    2: new course number"
+        echo "    3: title of new course"
+        echo "> copycourse cl220 cl221 Red Hat Hybrid Cloud Administration"
+    else
+        # collect variable data
+        orig=$(echo $1 | tr '[:upper:]' '[:lower:]')
+        new=$(echo $2 | tr '[:upper:]' '[:lower:]')
+        title=""
+        count=3
+        while [ $count -le $# ]; do
+            title+="${!count} "
+            let count++
+        done
+
+        # move to correct directory
+        cd ~/html/courses
+
+        # copy old file but delete CVS directory
+        cp -R "$orig" "$new" && echo "Copy $orig to $new"     
+        rm -rf "${new}/CVS" && rm -rf "${new}/enroll/CVS" && echo "Remove CVS directories"   
+
+        # add new content to cvs
+        cvs add $new && echo "Add $new"
+        #--specific to courses
+        cvs add ${new}/enroll && echo "Add $new/enroll"
+
+		#--specific to courses
+        file="${new}/enroll/index.html"
+        tmp="${new}/enroll/tmp"
+
+        # update content for the new course
+        sed "s/${orig}/${new}/g" "$file" > "$tmp" && mv "$tmp" "$file" && echo "Update text in file"
+
+        orig_up=$(echo $orig | tr '[:lower:]' '[:upper:]')
+        new_up=$(echo $new | tr '[:lower:]' '[:upper:]')
+
+		#--specific to courses
+        sed "s/${orig_up}/${new_up}/g" "$file" > "$tmp" && mv "$tmp" "$file"
+        sed "s/<h1>.*<\/h1>/<h1>${title}(${new_up})<\/h1>/g" "$file" > "$tmp" && mv "$tmp" "$file"
+
+        # add new content to cvs
+        cvs add $file && echo "CVS add new files"
+    fi
+}
+
+function cvsrmtag {
+    [[ "$1" = "-q" ]] && q=true || q=
+    [[ -n $q ]] && shift
+    
+    if [ $# -eq 0 ]; then
+        echo "Error: This function requires at least 1 input."
+        echo "    * File(s) to be tagged"
+        echo "> cvstag index.html"
+    else
+        for file in "$@"; do
+            [[ -n $q ]] && opt=-Q || opt=q
+            
+            cvs $opt tag -d LIVE $file
+            cvs $opt tag -d QA $file
+            cvs $opt tag -d TEST $file
+            cvs $opt tag -d STAGE $file
+        done
+    fi
+}
+
+function cvsrm {
+    [[ "$1" = "-q" ]] && quiet=true || quiet=
+    [[ -n $quiet ]] && shift
+    
+    # check that directory was provided
+    if [ $# -lt 1 ]; then
+        echo "Error: This function requires at least 1 input."
+        echo "    * Director[y|ies] to be removed."
+        echo "> cvsrm jb344"
+    else    
+        # iterate through all files provided as inputs
+        for file in "$@"; do
+            echo ""
+            
+            # don't prompt in quiet mode
+            [[ -n $quiet ]] && continue="y" || read -p "Continue with removal of: $file? (y/n): " continue
+                                
+            # untag and delete files from directory, cvs rm + remove directories at end
+            if [ $(lowcase $continue) == "y" ]; then
+                [[ -n $quiet ]] && cvsrmtag -q $file || cvsrmtag $file
+                
+                cmd=$(find $file -type f ! -path "CVS/*" ! -path "*/CVS/*")
+                if [[ -n $cmd ]]; then
+                    if [[ -z quiet ]]; then
+                        echo "----------------"
+                        find $file -type f ! -path "CVS/*" ! -path "*/CVS/*"
+                        echo "----------------"
+                    fi
+                    
+                    [[ -n $quiet ]] && answer="y" || read -p "Continue with delete? (y/n): " answer                
+                    [[ $(lowcase $answer) == "y" ]] && find $file -type f ! -path "CVS/*" ! -path "*/CVS/*" -delete
+                fi
+
+                cvs rm $file && rm -rf $file
+            fi
+
+        done
+    
+        [[ -n $quiet ]] && commit="y" || read -p "Commit changes? (y/n): " commit        
+        [[ $(lowcase $commit) == "y" ]] && cvscommit "Remove files $@" .
+    fi
+}

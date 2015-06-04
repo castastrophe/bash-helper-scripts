@@ -1,0 +1,8 @@
+#!/bin/bash
+    
+len=$1
+word="$2"
+
+c=${#word}
+c=$(($c-$len))
+echo "${word:0:$c}"
