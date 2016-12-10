@@ -1,5 +1,24 @@
 #!/bin/bash
 
+############
+# WEBRH HELPER FUNCTIONS
+# General: repositories must live in the same parent folder
+#
+# dependencies:
+#  --  USER variable; from bash_profile
+#		a string containing the user name
+#  --  REPOS array; from bash_profile
+#		an array of valid project repositories
+#  --  REPO_HOME variable; from bash_profile
+#		the path where all the repos exist together
+# --  sandbox function required; from bash_profile
+#      returns sandbox path
+############
+
+for r in "${REPOS[@]}"; do
+    alias ${r}="cd ${REPO_HOME}/${r}"
+done
+
 function getIndex {
 	search=$1; shift
 	array=( $* )
@@ -17,13 +36,6 @@ function sshsandbox {
 function bgwatch {
     grunt watcher &>/dev/null &
     return $!
-}
-
-function runwraith {
-    watch_pid=$(bgwatch)
-    echo "#--- Running ${1:-$USER} wraith"
-    wraith ${1:-$USER} wraith/baseline_pages.yaml &>/dev/null
-    kill -9 $watch_pid && return $!
 }
 
 function getRepo {

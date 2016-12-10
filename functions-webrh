@@ -1,5 +1,30 @@
 #!/bin/bash
 
+############
+# WEBRH HELPER FUNCTIONS
+# General: repositories must live in the same parent folder
+#
+# dependencies:
+#  --  USER variable; from bash_profile
+#		a string containing the user name
+#  --  REPOS array; from bash_profile
+#		an array of valid project repositories
+#  --  REPO_HOME variable; from bash_profile
+#		the path where all the repos exist together
+#  --  DRUPAL_LOC variable; from bash_profile
+#		path on your sandbox where Drupal is installed
+#  --  Repo shortcut alias'; from functions-dev
+#		cds to the top of a specific repo
+#  --  getMaster function required; from bash_profile
+#       returns repo-specific master branch
+# --  sandbox function required; from bash_profile
+#      returns sandbox path
+# --  getRepo function required; from functions-dev
+#      returns name of current repository
+############
+
+test -f functions-dev && . $_
+
 function spin {
     printf "\r${1}: [ ${sp:sc++:1} ] "
     ((sc==${#sp})) && sc=0
@@ -65,32 +90,40 @@ function echoCmd {
 # Syncs the webrh directory with webdrupal and pushes up to selected sandbox
 # to run on a box other than yours, set USER variable equal to the name of that box
 function pksync {
-	if [[ $(pwd | grep -i "webrh") ]]; then
-		echo "Syncing webrh with $USER" && echoCmd echo "Move to $(pwd)" && grunt && webdrupal && echoCmd echo "Move to $(pwd)" && bower link webrh && echoCmd grunt build && echoCmd echo "rsync webdrupal to $box" && echo "$box" | make rsync2sandbox
+	repo=$(getRepo)
+	start=$(pwd)
+	if [[ $repo == "webrh" || $repo == "webrh-alt" ]]; then
+		echo "Syncing webrh with $USER" && webrh && echoCmd echo "Move to $(pwd)" && grunt && webdrupal && echoCmd echo "Move to $(pwd)" && bower link webrh && echoCmd grunt build && echoCmd echo "rsync webdrupal to $box" && echo "$box" | make rsync2sandbox
 	else
 		echo "This command must be run in the webrh directory."
 	fi
+	cd $start
 }
 
 # Runs an import of patterns
 # to run on a box other than yours, set USER variable equal to the name of that box
 function pkimport {
+	start=$(pwd)
     #[ $# -eq 0 ] && patterns="--all" || patterns="$*"
     ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi ${*:---all} && drush cc all"
+	cd $start
 }
 
 # Runs a remove and then an import of patterns
 # to run on a box other than yours, set USER variable equal to the name of that box
 function pkbuild {
+	start=$(pwd)
     #[ $# -eq 0 ] && patterns="--all" || patterns="$*"
     ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi-remove ${*:--all} && drush pbi ${*:--all} && drush cc all"
+	cd $start
 }
 
 function testupdate {
+	repo=$(getRepo)
 	pattern_count=$#
 	fail=0
 	success=0
-	if [[ $(pwd | grep -i "webrh") ]]; then
+	if [[ $repo == "webrh" || $repo == "webrh-alt" ]]; then
 	    #if no patterns were provided, throw error
 	    if [ $pattern_count -eq 0 ]; then
 	        echo "No test names were provided to update.  Please provide tests names in this format: $ testupdate promo_band standard_text_band cta"

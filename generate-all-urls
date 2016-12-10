@@ -1,11 +1,8 @@
 #!/bin/bash
 
-for URL_PATH in "$@"
-do
-	for PROTOCOL in http https
-	do
-		for LANG in de en es fr it ja ko pt-br zh
-		do
+for URL_PATH in "$@"; do
+	for PROTOCOL in http https; do
+		for LANG in de en es fr it ja ko pt-br zh; do
 			echo "${PROTOCOL}://www.redhat.com/${LANG}/${URL_PATH}" | sed 's#/\+$##'
 		done
 	done

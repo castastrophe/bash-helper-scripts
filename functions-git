@@ -1,12 +1,32 @@
 #!/bin/bash
 
-[ -f ~/bin/git-completion ] && . ~/bin/git-completion
+############
+# GIT HELPER FUNCTIONS
+# dependencies:
+#  --  REPOS variable; from bash_profile
+#		an array of valid project repositories
+#  --  getMaster function required; from bash_profile
+#       returns repo-specific master branch
+# --  getRepo function required; from functions-dev
+#      returns name of current repository
+# --  getIndex function required; from functions-dev
+#      returns index of the provided search string in passed array
+############
 
+# Check for dependencies
+test -f git-completion && . $_
+test -f functions-dev && . $_
+
+function currbranch {
+    git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+# Add and stash any WIP
 function gitclean {
     git add . && git stash
 }
 
-# Get the branch from function input or prompt
+# Get the branch name from function input or prompt
 function getBranch {
 	[ $# > 0 ] && branch=$1 || read -p "Branch name: " branch
 	echo $branch
