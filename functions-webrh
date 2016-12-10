@@ -1,0 +1,116 @@
+#!/bin/bash
+
+function spin {
+    printf "\r${1}: [ ${sp:sc++:1} ] "
+    ((sc==${#sp})) && sc=0
+}
+
+function endspin {
+    printf "\r%s\n" "$@"
+}
+
+# Kick off a jenkins build
+function buildstatus {
+	sandbox=$(sandbox $1)
+    JOB_URL="${sandbox/root\@/http\:\/\/}:8080/job/webdrupal-update"
+    JOB_STATUS_URL=${JOB_URL}/lastBuild/api/json
+	GREP_RETURN_CODE=0
+	
+	# Test if url is accessible
+	test=$(curl -s --max-time 5 --head $JOB_STATUS_URL | head -n 1)
+	if [ $? -ne 0 ]; then
+		# Poll every thirty seconds until the build is finished
+	    while [ $GREP_RETURN_CODE -eq 0 ]; do
+	        spin "Please wait for the Jenkins build to finish"
+	        sleep 1
+
+	        # Grep will return 0 while the build is running:
+			status=$(curl -s $JOB_STATUS_URL | grep result\":null)
+			GREP_RETURN_CODE=$?
+	    done
+	    endspin
+		
+		success=$(curl -s $JOB_STATUS_URL | grep "result\":\"SUCCESS")
+		[ $? -eq 0 ] && echo "Build was successful!"
+		fail=$(curl -s $JOB_STATUS_URL | grep "result\":\"FAILURE")
+		[ $? -eq 0 ] && echo "Build failed :("
+	else
+		echo "Sandbox url is not available"
+	fi
+}
+
+function buildbox {
+	sandbox=$(sandbox $1)
+    JOB_URL="${sandbox/root\@/http\:\/\/}:8080/job/webdrupal-update"
+    JOB_STATUS_URL=${JOB_URL}/lastBuild/api/json
+    GREP_RETURN_CODE=0
+	
+	# Check if a build is already running
+	test=$(curl -s $JOB_STATUS_URL | grep result\":null)
+	GREP_RETURN_CODE=$?
+	
+	[ GREP_RETURN_CODE -ne 0 ] && read -e -p "It looks like a build is already running; are you sure you want to kick off another one? [y/n]" choice
+	
+    # Start the build
+	[ $choice == "y" ] && curl $JOB_URL/buildWithParameters?delay=0sec
+
+    # Poll every thirty seconds until the build is finished
+	buildstatus $1
+}
+
+function echoCmd {
+	echo $'\n-----------' && $@ && echo $'------------\n'
+}
+
+# Syncs the webrh directory with webdrupal and pushes up to selected sandbox
+# to run on a box other than yours, set USER variable equal to the name of that box
+function pksync {
+	if [[ $(pwd | grep -i "webrh") ]]; then
+		echo "Syncing webrh with $USER" && echoCmd echo "Move to $(pwd)" && grunt && webdrupal && echoCmd echo "Move to $(pwd)" && bower link webrh && echoCmd grunt build && echoCmd echo "rsync webdrupal to $box" && echo "$box" | make rsync2sandbox
+	else
+		echo "This command must be run in the webrh directory."
+	fi
+}
+
+# Runs an import of patterns
+# to run on a box other than yours, set USER variable equal to the name of that box
+function pkimport {
+    #[ $# -eq 0 ] && patterns="--all" || patterns="$*"
+    ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi ${*:---all} && drush cc all"
+}
+
+# Runs a remove and then an import of patterns
+# to run on a box other than yours, set USER variable equal to the name of that box
+function pkbuild {
+    #[ $# -eq 0 ] && patterns="--all" || patterns="$*"
+    ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi-remove ${*:--all} && drush pbi ${*:--all} && drush cc all"
+}
+
+function testupdate {
+	pattern_count=$#
+	fail=0
+	success=0
+	if [[ $(pwd | grep -i "webrh") ]]; then
+	    #if no patterns were provided, throw error
+	    if [ $pattern_count -eq 0 ]; then
+	        echo "No test names were provided to update.  Please provide tests names in this format: $ testupdate promo_band standard_text_band cta"
+	        return;
+	    fi
+	    # iterate over list of patterns to update tests for
+	    for pattern in $@; do
+	        grunt test:$pattern:update
+	        # if the update fails, run it one more time
+	        if [ $? -ne 0 ]; then
+				fail++
+	            grunt test:$pattern:update
+				if [ $? -ne 0 ]; then
+					success++
+				fi
+			else
+				success++
+	        fi
+	    done
+	else
+		echo "This command must be run in the webrh directory."
+	fi
+}

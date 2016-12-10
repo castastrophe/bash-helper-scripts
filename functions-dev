@@ -1,0 +1,54 @@
+#!/bin/bash
+
+function getIndex {
+	search=$1; shift
+	array=( $* )
+	len=$(expr ${#array[@]})
+	i=$( echo ${array[@]/$search//} | cut -d/ -f1 | wc -w | tr -d ' ' )
+	[ $i -lt $len ] && echo $i || echo -1
+}
+
+function sshsandbox {
+    cmd="ssh $(sandbox ${1:-$USER})"
+    eval $cmd
+}
+
+# Run grunt watcher in the background
+function bgwatch {
+    grunt watcher &>/dev/null &
+    return $!
+}
+
+function runwraith {
+    watch_pid=$(bgwatch)
+    echo "#--- Running ${1:-$USER} wraith"
+    wraith ${1:-$USER} wraith/baseline_pages.yaml &>/dev/null
+    kill -9 $watch_pid && return $!
+}
+
+function getRepo {
+	this=
+	for repo in ${REPOS[@]}; do
+		test=$(pwd | grep ${repo})
+	    [ $? -eq 0 ] && this="${repo}"
+	done
+
+    # if neither repo
+    [ -z "$this" ] && echo "You are not in a valid repository." && return 1
+
+    echo "$this" && return 0
+}
+
+function topofrepo {
+	oldIFS=$IFS
+    repo=$(getRepo)
+    [ $? -gt 0 ] && echo "Must be in a valid project repository." && return
+	# Check full path and move to root of repository
+	path="$(pwd)"
+	path=${path#\/}
+	IFS='/' declare -a 'arr=( ${path%\/} )'
+	i=$( getIndex $repo ${arr[@]} )
+	root=
+	[[ $i -lt ${#arr[@]} ]] && root=$(IFS='/'; shift; echo "/${arr[*]:0:$i+1}") && cd $root
+	IFS=$oldIFS
+}

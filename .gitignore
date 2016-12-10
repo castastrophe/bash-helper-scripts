@@ -1,1 +1,5 @@
+# Ignore private functions
 functions-private
+
+# Ignore Mac customizations
+.DS_Store

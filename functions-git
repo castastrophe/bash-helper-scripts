@@ -1,39 +1,61 @@
 #!/bin/bash
 
-function checkout {
-    branch=$1
-    git checkout cce
-    git checkout $branch
-    git pull origin cce
+[ -f ~/bin/git-completion ] && . ~/bin/git-completion
+
+function gitclean {
+    git add . && git stash
+}
+
+# Get the branch from function input or prompt
+function getBranch {
+	[ $# > 0 ] && branch=$1 || read -p "Branch name: " branch
+	echo $branch
+}
+
+# Checkout an existing branch
+function co {
+    branch=$(getBranch $1)
+	gitclean &&  git checkout $(getMaster) && git pull origin $(getMaster) && git checkout $branch && git pull origin $branch
 }
 
 function push {
+	# save the commit message if passed in
     msg="${*}"
+	repo=$(getRepo)
+	# Check if there are changes to commit
+    [[ ! $(git status | grep "Changes") ]] && echo "No commit changes to push." && git push && return
 
-    proj="" 
-    IFS='-' read -a w <<< $(currbranch)
-    if [[ "${w[1]}" =~ (US|TASK|INC)[[:digit:]]+ ]]; then proj=${w[1]}; fi
+    proj=
+	old=$IFS
+    while IFS='-' read -a seg; do
+        # grep for task/story/incident info
+        if [[ $(getIndex $repo $REPOS) -gt -1 ]]; then
+			[[ $seg =~ (US|TASK|INC)[[:digit:]]+ ]] && proj="[$seg]" || proj="[dev]"
+		fi
+    done  <<< $(currbranch)
+	IFS=$old
 
-    if [ -z $msg ]; then 
-        read -p "Describe commit: [UX] $proj-" msg 
+    if [[ $( pwd | grep -i "webux" ) || $( pwd | grep -i "webrh" ) ]]; then
+        grunt lint && [ -z $msg ] && read -e -p "Describe commit: ${proj} " msg && git commit -a -m "$proj: $msg" && git push origin $(currbranch)
+    else
+        [ -z $msg ] && read -e -p "Describe commit: ${proj} " msg && git commit -a -m "$proj: $msg" && git push origin $(currbranch)
     fi
-    
-    git commit -a -m "[UX] $proj-$msg" 
-    git push origin $(currbranch)
+}
+
+function fork {
+    # Clean current branch then get the latest version
+    gitclean && git pull origin $(currbranch)
+	# Get branch name
+	branch=$(getBranch $1)
+	# Create the new branch and tracking branch against origin
+	git checkout -b $branch && git push -u origin $branch
 }
 
 function newbranch {
-    stash=$(git status | grep -i "nothing to commit")
-    [ -z "$stash" ] && git stash
-
-    git checkout cce
-    git pull origin cce
-
-    if [ $1 ]; then
-        git checkout -b ux-$1
-        git push -u origin ux-$1
-    else
-        read -p "Branch name: " branch && git checkout -b ux-$branch 
-        git push -u origin ux-$branch
-    fi
+	# Clean current branch, then checkout master and get latest
+    gitclean && git checkout $(getMaster) && git pull origin $(getMaster)
+	# Get branch name
+	branch=$(getBranch $1)
+	# Create the new branch and tracking branch against origin
+    git checkout -b $branch && git push -u origin $branch
 }
