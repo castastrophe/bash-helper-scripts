@@ -28,7 +28,7 @@ function gitclean {
 
 # Get the branch name from function input or prompt
 function getBranch {
-	[ $# > 0 ] && branch=$1 || read -p "Branch name: " branch
+	[[ $# > 0 ]] && branch=$1 || read -p "Branch name: " branch
 	echo $branch
 }
 
@@ -36,6 +36,13 @@ function getBranch {
 function co {
     branch=$(getBranch $1)
 	gitclean &&  git checkout $(getMaster) && git pull origin $(getMaster) && git checkout $branch && git pull origin $branch
+}
+
+# Get the branch name from function input or prompt
+function killbranch {
+	for var in "$@"; do
+		echoCmd "Kill branch local and remote: $var" && git branch -D $var && git push origin :$var
+	done
 }
 
 function push {

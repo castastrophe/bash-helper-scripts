@@ -19,6 +19,10 @@ for r in "${REPOS[@]}"; do
     alias ${r}="cd ${REPO_HOME}/${r}"
 done
 
+function echoCmd {
+	echo $'\n-----------' && $@ && echo $'------------\n'
+}
+
 function getIndex {
 	search=$1; shift
 	array=( $* )

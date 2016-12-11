@@ -83,10 +83,6 @@ function buildbox {
 	buildstatus $1
 }
 
-function echoCmd {
-	echo $'\n-----------' && $@ && echo $'------------\n'
-}
-
 # Syncs the webrh directory with webdrupal and pushes up to selected sandbox
 # to run on a box other than yours, set USER variable equal to the name of that box
 function pksync {
