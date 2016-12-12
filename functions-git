@@ -56,7 +56,7 @@ function push {
 	old=$IFS
     while IFS='-' read -a seg; do
         # grep for task/story/incident info
-        if [[ $(getIndex $repo $REPOS) -gt -1 ]]; then
+        if [[ $(getIndex $repo ${REPOS[@]}) -gt -1 ]]; then
 			[[ $seg =~ (US|TASK|INC)[[:digit:]]+ ]] && proj="[$seg]" || proj="[dev]"
 		fi
     done  <<< $(currbranch)
