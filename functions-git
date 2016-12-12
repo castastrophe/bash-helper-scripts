@@ -50,22 +50,23 @@ function push {
     msg="${*}"
 	repo=$(getRepo)
 	# Check if there are changes to commit
-    [[ ! $(git status | grep "Changes") ]] && echo "No commit changes to push." && git push && return
+    #[[ ! $(git status | grep "Changes") ]] && echo "No commit changes to push." && git push && return
 
     proj=
 	old=$IFS
     while IFS='-' read -a seg; do
         # grep for task/story/incident info
         if [[ $(getIndex $repo ${REPOS[@]}) -gt -1 ]]; then
-			[[ $seg =~ (US|TASK|INC)[[:digit:]]+ ]] && proj="[$seg]" || proj="[dev]"
+			[[ $seg =~ (US|TASK|INC)[[:digit:]]+ ]] && proj="$seg" || read -e -p "Please enter the user story if available: " proj || proj="dev"
+            proj="[${proj}]: "
 		fi
     done  <<< $(currbranch)
 	IFS=$old
 
     if [[ $( pwd | grep -i "webux" ) || $( pwd | grep -i "webrh" ) ]]; then
-        grunt lint && [ -z $msg ] && read -e -p "Describe commit: ${proj} " msg && git commit -a -m "$proj: $msg" && git push origin $(currbranch)
+        grunt lint && [ -z $msg ] && read -e -p "Describe commit - ${proj}" msg && git commit -a -m "${proj}${msg}" && git push origin $(currbranch)
     else
-        [ -z $msg ] && read -e -p "Describe commit: ${proj} " msg && git commit -a -m "$proj: $msg" && git push origin $(currbranch)
+        [ -z $msg ] && read -e -p "Describe commit - ${proj}" msg && git commit -a -m "${proj}${msg}" && git push origin $(currbranch)
     fi
 }
 
