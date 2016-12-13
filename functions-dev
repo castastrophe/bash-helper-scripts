@@ -93,7 +93,7 @@ function buildstatus {
 		# Poll every thirty seconds until the build is finished
 	    while [ $GREP_RETURN_CODE -eq 0 ]; do
 	        spin "Please wait for the Jenkins build to finish"
-	        sleep 1
+	        sleep 5
 
 	        # Grep will return 0 while the build is running:
 			status=$(curl -s $JOB_STATUS_URL | grep result\":null)
@@ -124,7 +124,7 @@ function buildbox {
 	[[ $GREP_RETURN_CODE == 0 ]] && read -e -p "It looks like a build is already running; are you sure you want to kick off another one? [y/n]" choice
 	
     # Start the build
-	[[ $choice == "y" || $GREP_RETURN_CODE > 0 ]] && curl $JOB_URL/buildWithParameters?delay=0sec
+	[[ $choice == "y" || $GREP_RETURN_CODE > 0 ]] && curl $JOB_URL/buildWithParameters?delay=0sec && open "${JOB_URL}"
 
     # Poll every thirty seconds until the build is finished
 	buildstatus $1

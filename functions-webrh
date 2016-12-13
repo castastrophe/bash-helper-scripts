@@ -54,6 +54,10 @@ function pkbuild {
 	cd $start
 }
 
+function pkfull {
+	buildbox ${USER:1} && pksync ${USER:1} && pkimport ${USER:1}
+}
+
 function testupdate {
 	repo=$(getRepo)
 	pattern_count=$#
