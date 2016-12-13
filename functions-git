@@ -35,7 +35,8 @@ function getBranch {
 # Checkout an existing branch
 function co {
     branch=$(getBranch $1)
-	gitclean &&  git checkout $(getMaster) && git pull origin $(getMaster) && git checkout $branch && git pull origin $branch
+	gitclean &&  git checkout $(getMaster) && git pull origin $(getMaster)
+    git checkout $branch && git pull origin $branch
 }
 
 # Get the branch name from function input or prompt
@@ -72,7 +73,7 @@ function push {
 
 function fork {
     # Clean current branch then get the latest version
-    gitclean && git pull origin $(currbranch)
+    git pull origin $(currbranch)
 	# Get branch name
 	branch=$(getBranch $1)
 	# Create the new branch and tracking branch against origin
