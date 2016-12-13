@@ -11,6 +11,8 @@
 #		an array of valid project repositories
 #  --  REPO_HOME variable; from bash_profile
 #		the path where all the repos exist together
+#  --  DRUPAL_LOC variable; from bash_profile
+#		path on your sandbox where Drupal is installed
 # --  sandbox function required; from bash_profile
 #      returns sandbox path
 ############

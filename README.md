@@ -54,6 +54,8 @@ If you find bugs or make updates to these scripts that would be beneficial to ot
   - i.e., if your repository is named project: `$ project` will automatically cd you to the top level of that repo.
 - `sshsandbox`: SSH's into your sandbox or can accept 1 input to log into a box that doesn't match your username.
   - i.e. `$ sshsandbox` or `$ sshsandbox <other-username>`
+- `buildstatus`: This will return the build status of your sandbox; to check the status of a box other than your own, pass in that username: `$ buildstatus <other-username>`
+- `buildbox`: This will kick off a build of your sandbox off of master and show you it's build progress in the command line.
   
 ## Red Hat project-specific tasks
 These will be less useful for general audiences.
@@ -62,8 +64,6 @@ These will be less useful for general audiences.
 - `runwraith`: Still a WIP but will (in theory) kick off grunt watcher in the background and generate wraith baselines.
 
 ### functions-webrh
-- `buildstatus`: This will return the build status of your sandbox; to check the status of a box other than your own, pass in that username: `$ buildstatus <other-username>`
-- `buildbox`: This will kick off a build of your sandbox off of master and show you it's build progress in the command line.
 - `pksync`: This bower links the webrh repository with webdrupal and rsyncs to your sandbox.  To change the sandbox it builds on, you must set the USER variable to a different value: `$ USER="<other-username>"; pksync`
 - `pkimport`: This ssh's into your sandbox, cds to the location of the Drupal install, runs the pbi importer, then clears the cache. The default runs --all or you can pass in the specific patterns you want to import.
   - i.e., `$ pkimport card group band`
