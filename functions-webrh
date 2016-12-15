@@ -66,7 +66,7 @@ function testupdate {
 	if [[ $repo == "webrh" || $repo == "webrh-alt" ]]; then
 	    #if no patterns were provided, throw error
 	    if [ $pattern_count -eq 0 ]; then
-	        echo "No test names were provided to update.  Please provide tests names in this format: $ testupdate promo_band standard_text_band cta"
+	        echo "No test names were provided to update.  Please provide tests names in this format:\n\t$ testupdate promo_band standard_text_band cta"
 	        return;
 	    fi
 	    # iterate over list of patterns to update tests for
@@ -74,15 +74,17 @@ function testupdate {
 	        grunt test:$pattern:update
 	        # if the update fails, run it one more time
 	        if [ $? -ne 0 ]; then
-				fail++
+				let "fail++"
 	            grunt test:$pattern:update
 				if [ $? -ne 0 ]; then
-					success++
+					let "success++"
 				fi
 			else
-				success++
+				let "success++"
 	        fi
 	    done
+		
+		echoCmd echo "${success} successful update(s) | ${fail} failed update(s)"
 	else
 		echo "This command must be run in the webrh directory."
 	fi
