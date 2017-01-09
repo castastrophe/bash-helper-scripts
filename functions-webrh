@@ -29,7 +29,7 @@ function pksync {
 	repo=$(getRepo)
 	start=$(pwd)
 	if [[ $repo == "webrh" || $repo == "webrh-alt" ]]; then
-		echo "Syncing webrh with $USER" && webrh && echoCmd echo "Move to $(pwd)" && grunt && webdrupal && echoCmd echo "Move to $(pwd)" && bower link webrh && echoCmd grunt build && echoCmd echo "rsync webdrupal to $USER" && echo "$USER" | make rsync2sandbox
+		echo "Syncing webrh with $USER" && grunt && webdrupal && echoCmd echo "Move to $(pwd)" && bower link webrh && echoCmd grunt build && echoCmd echo "rsync webdrupal to $USER" && echo "$USER" | make rsync2sandbox
 	else
 		echo "This command must be run in the webrh directory."
 	fi
@@ -40,8 +40,9 @@ function pksync {
 # to run on a box other than yours, set USER variable equal to the name of that box
 function pkimport {
 	start=$(pwd)
+	all=--all
     #[ $# -eq 0 ] && patterns="--all" || patterns="$*"
-    echo "Importing webrh patterns to $sandbox" && ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi ${*:---all} && drush cc all"
+    echo "Importing webrh patterns to $USER" && ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi ${*:-$all} && drush cc all"
 	cd $start
 }
 
@@ -50,7 +51,7 @@ function pkimport {
 function pkbuild {
 	start=$(pwd)
     #[ $# -eq 0 ] && patterns="--all" || patterns="$*"
-    echo "Remove and then import webrh patterns to $sandbox" && ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi-remove ${*:--all} && drush pbi ${*:--all} && drush cc all"
+    echo "Remove and then import webrh patterns to $USER" && ssh $(sandbox) "cd ${DRUPAL_LOC} && drush pbi-remove ${*:-$all} && drush pbi ${*:-$all} && drush cc all"
 	cd $start
 }
 

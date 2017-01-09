@@ -1,4 +1,5 @@
 #!/bin/bash
+shopt -s expand_aliases
 
 ############
 # WEBRH HELPER FUNCTIONS
@@ -80,6 +81,12 @@ function endspin {
     printf "\r%s\n" "$@"
 }
 
+function getBranchByRepo {
+	repo=$1
+    [[ $( getIndex $repo ${REPOS[@]} ) -le 0 ]] && echo "Please provide a valid repository name as an input." && return 1
+    start=$( pwd ) && eval "${repo}" && branch=$( currbranch ) && cd $start && echo $branch
+}
+
 # Kick off a jenkins build
 function buildstatus {
 	sandbox=$(sandbox $1)
@@ -124,8 +131,8 @@ function buildbox {
 	[[ $GREP_RETURN_CODE == 0 ]] && read -e -p "It looks like a build is already running; are you sure you want to kick off another one? [y/n]" choice
 	
     # Start the build
-	[[ $choice == "y" || $GREP_RETURN_CODE > 0 ]] && curl $JOB_URL/buildWithParameters?delay=0sec && open "${JOB_URL}"
+	[[ $choice == "y" || $GREP_RETURN_CODE > 0 ]] && curl $JOB_URL/buildWithParameters?delay=0sec&GIT_BRANCH=$( getBranchByRepo webdrupal ) && open "${JOB_URL}"
 
     # Poll every thirty seconds until the build is finished
-	buildstatus $1
+	#buildstatus $1
 }

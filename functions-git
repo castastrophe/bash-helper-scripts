@@ -40,9 +40,9 @@ function co {
 }
 
 # Get the branch name from function input or prompt
-function killbranch {
+function rmbranch {
 	for var in "$@"; do
-		echoCmd "Kill branch local and remote: $var" && git branch -D $var && git push origin :$var
+		echoCmd echo "Kill branch local and remote: $var" && git branch -D $var && git push origin :$var
 	done
 }
 
