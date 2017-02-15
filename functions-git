@@ -35,7 +35,7 @@ function getBranch {
 # Checkout an existing branch
 function co {
     branch=$(getBranch $1)
-	gitclean &&  git checkout $(getMaster) && git pull origin $(getMaster)
+	gitclean &&  git checkout $(getMaster) && git fetch && git pull origin $(getMaster)
     git checkout $branch && git pull origin $branch
 }
 
