@@ -5,10 +5,10 @@ If you find bugs or make updates to these scripts that would be beneficial to ot
 
 ## Required for your bash_profile
 ```
-  USER="<your username>"
-  DRUPAL_LOC="<path to drupal install on sandboxes"
+  USER="<your username here>"
+  DRUPAL_LOC="<path to drupal install on sandboxes here>"
   REPOS=(list of supported project repositories)
-  REPO_HOME=<local path to where you repositories are installed>
+  REPO_HOME=<local path to where your repositories are installed>
   
   # Return the url of the sandbox
   function sandbox {
